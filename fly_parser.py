@@ -89,24 +89,36 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                 res = node.xpath('.//*[@class="lowest"]/span/@title')
                 for elem in res:
                     price.append(list([elem.split(',')[1][:6],
-                                            elem.split(',')[1][7:],
-                                            elem.split(',')[2],
-                                            elem.split(',')[3].split(':')[0],
-                                            float(''.join(elem.split(':')[3].split('.')).replace(',','.'))]))
+                                       elem.split(',')[1][7:],
+                                       elem.split(',')[2],
+                                       elem.split(',')[3].split(':')[0],
+                                       float(''.join(elem.split(':')[3].split('.')).replace(',','.'))]))
         return price
 
     price_outbond = parser_fly_html('.//*[@class="outbound block"]/div[2]/table/tbody/')
     price_return = parser_fly_html('.//*[@class="return block"]/div[2]/table/tbody/')
-    print price_outbond
-    print price_return
+    if not return_data:
 
-#iata_depart = "DME"
-#iata_destination = "BNE"
-#out_data = "2017-07-07"
-#return_data = "2017-07-29"
-#parser_flyniki(iata_depart, iata_destination, out_data, return_data)
+        print 'Туда'
+        for elem_out in price_outbond:
+            print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
+    else:
+        
+        print 'Варианты Туда-Обратно'
+        for elem_out in price_outbond:
+            for elem_ret in price_return:
+                print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
+                print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_ret) + currency
+                print 'Общая стоимость: ', elem_out[-1] + elem_ret[-1], currency
 
 
+iata_depart = "DME"
+iata_destination = "BNE"
+out_data = "2017-07-07"
+return_data = "2017-07-29"
+parser_flyniki(iata_depart, iata_destination, out_data, return_data)
+
+"""
 def parser():
     
     while True:
@@ -125,6 +137,7 @@ def parser():
 
     parser_flyniki(iata_depart, iata_destination, out_data, return_data)
 parser()
+"""
 
 
 
