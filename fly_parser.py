@@ -42,7 +42,6 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
 
     req_sess = requests.Session()
     start_post = req_sess.post(start_url, data=data, headers=headers, verify=False)
-    print '------------1------------' '\n'
     
     data_res = [('_ajax[templates][]', 'main'),
                 ('_ajax[templates][]', 'priceoverview'),
@@ -70,7 +69,6 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                     'X-Requested-With': 'XMLHttpRequest'}
 
     result = requests.post(start_post.url, data=data_res, headers=headers_res, cookies=req_sess.cookies, verify=False)
-    print '-----------2----------'
     if not bool(result.json()['templates']['priceoverview']):
         print 'Не удалось найти рейсов на запрошенные даты.'
         return
