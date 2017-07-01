@@ -13,3 +13,4 @@ patt = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA
 url_in_c= re.findall(patt, res.text)
 for i in url_in_c:
 	print(i)
+#Изменения
