@@ -7,11 +7,11 @@ import re
 # Проверка валидности даты
 def valid_date(inp_date):
     try:
-        if not bool(re.match('\d{4}-\d{2}-\d{2}',inp_date)):
+        if not bool(re.match('\d{4}-\d{2}-\d{2}', inp_date)):
             print 'Введите корректную дату'
             return False
         yy, mm, dd = map(int, inp_date.split('-'))
-        delta = date(yy,mm,dd) - date.today()
+        delta = date(yy, mm, dd) - date.today()
         if delta.days < 0:
             print 'Дата меньше текущей'
             return False
@@ -70,7 +70,6 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
     if not bool(result.json()['templates']['priceoverview']):
         print 'Не удалось найти рейсы на запрошенную дату.'
         return
-    print result
     try:
         fly_html = html.fromstring(result.json()['templates']['main'])
     except:
@@ -80,7 +79,6 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
 
     def parser_fly_html(path_x):
         price = list()
-        fly_html.xpath(path_x + "tr")
         for row in range(len(fly_html.xpath(path_x + "tr"))):
             block = fly_html.xpath(path_x +  'tr[' + str(row) + ']/td')
             for node in block:
@@ -113,9 +111,8 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
 iata_depart = "DME"
 iata_destination = "BNE"
 #out_data = "2017-07-07"
-#return_data = "2017-07-29"
+#return_data = ''#"2017-07-29"
 #parser_flyniki(iata_depart, iata_destination, out_data, return_data)
-
 
 def parser():
     
