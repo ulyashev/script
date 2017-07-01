@@ -4,8 +4,6 @@ from lxml import html
 from datetime import date 
 import re
 
-
-
 # Проверка валидности даты
 def valid_date(inp_date):
     try:
@@ -19,7 +17,7 @@ def valid_date(inp_date):
             return False
         print 'ok'
         return True
-    except:
+    except ValueError:
         print 'Введите корректную дату'
         return False
 
@@ -70,7 +68,7 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
 
     result = requests.post(start_post.url, data=data_res, headers=headers_res, cookies=req_sess.cookies, verify=False)
     if not bool(result.json()['templates']['priceoverview']):
-        print 'Не удалось найти рейсов на запрошенные даты.'
+        print 'Не удалось найти рейсы на запрошенную дату.'
         return
     print result
     try:
@@ -99,12 +97,12 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
     price_return = parser_fly_html('.//*[@class="return block"]/div[2]/table/tbody/')
     if not return_data:
 
-        print 'Туда'
+        print 'Варианты маршрутов:'
         for elem_out in price_outbond:
             print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
     else:
-        
-        print 'Варианты Туда-Обратно'
+
+        print 'Варианты маршрутов:'
         for elem_out in price_outbond:
             for elem_ret in price_return:
                 print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
@@ -114,11 +112,11 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
 
 iata_depart = "DME"
 iata_destination = "BNE"
-out_data = "2017-07-07"
-return_data = "2017-07-29"
-parser_flyniki(iata_depart, iata_destination, out_data, return_data)
+#out_data = "2017-07-07"
+#return_data = "2017-07-29"
+#parser_flyniki(iata_depart, iata_destination, out_data, return_data)
 
-"""
+
 def parser():
     
     while True:
@@ -137,7 +135,6 @@ def parser():
 
     parser_flyniki(iata_depart, iata_destination, out_data, return_data)
 parser()
-"""
 
 
 
