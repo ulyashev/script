@@ -58,7 +58,6 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.59 Safari/537.36',
                     'X-Requested-With': 'XMLHttpRequest'}
-
     result = requests.post(start_post.url, data=data_res, headers=headers_res, cookies=req_sess.cookies, verify=False)
     try:
         fly_html = html.fromstring(result.json()['templates']['main'])
@@ -92,13 +91,25 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
         print 'Варианты маршрутов:'
         for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
             print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
+            print '-------------------------????-----------------------------------------------'
     else:
-        print 'Варианты маршрутов:'
+        price_result = list()
         for elem_out in price_outbond:
             for elem_ret in price_return:
-                print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
-                print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_ret) + currency
-                print 'Общая стоимость: ', elem_out[-1] + elem_ret[-1], currency
+                price_result.append({'track_out':elem_out, 'track_return':elem_ret, 'total_sum':elem_out[-1] + elem_ret[-1] })
+        for elem_result in sorted(price_result, key=lambda x: x['total_sum']):
+            print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_result['track_out']) + currency
+            print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_result['track_return']) + currency
+            print 'Общая стоимость: ', elem_result['track_out'][-1] + elem_result['track_return'][-1], currency
+            print '--------------------------------------??????------------------------------'
+# Тесовые параметры ввода
+# iata_depart = 'dme'
+# iata_destination = 'bne'
+# out_data = '2017-07-22'
+# return_data = '2017-07-29'
+# parser_flyniki(iata_depart, iata_destination, out_data, return_data)
+
+
 def parser():
     while True:
         out_data = raw_input('Введите дату вылета (yyyy-mm-dd): ')
@@ -115,3 +126,4 @@ def parser():
     iata_destination = raw_input('Введите аэропорт назначения (IATA): ')
     parser_flyniki(iata_depart, iata_destination, out_data, return_data)
 parser()
+
