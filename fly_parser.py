@@ -67,13 +67,17 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                     'X-Requested-With': 'XMLHttpRequest'}
 
     result = requests.post(start_post.url, data=data_res, headers=headers_res, cookies=req_sess.cookies, verify=False)
-    if not bool(result.json()['templates']['priceoverview']):
-        print 'Не удалось найти рейсы на запрошенную дату.'
-        return
     try:
         fly_html = html.fromstring(result.json()['templates']['main'])
-    except:
-        print 'Возникла ошибка, повторите запрос.'
+    except KeyError:
+        if result.json()['errorRAW'][0]['code'] == 'departure':
+            print 'Веден не кооректный IATA аэропорта отправления.'
+            return
+        if result.json()['errorRAW'][0]['code'] == 'destination':
+            print 'Веден не кооректный IATA аэропорта назначения.'
+            return
+    if not bool(result.json()['templates']['priceoverview']):
+        print 'Не удалось найти рейсы на запрошенную дату.'
         return
     currency = fly_html.xpath('.//*[@id="flighttables"]/div[1]/div[2]/table/thead/tr[2]/th[4]/text()')[0]
 
@@ -108,12 +112,12 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                 print 'Общая стоимость: ', elem_out[-1] + elem_ret[-1], currency
 
 
-iata_depart = "DME"
-iata_destination = "BNE"
-#out_data = "2017-07-07"
-#return_data = ''#"2017-07-29"
-#parser_flyniki(iata_depart, iata_destination, out_data, return_data)
-
+iata_depart = "DM"
+iata_destination = "bne"
+out_data = "2017-07-07"
+return_data = "2017-07-29"
+parser_flyniki(iata_depart, iata_destination, out_data, return_data)
+"""
 def parser():
     
     while True:
@@ -132,6 +136,7 @@ def parser():
 
     parser_flyniki(iata_depart, iata_destination, out_data, return_data)
 parser()
+"""
 
 
 
