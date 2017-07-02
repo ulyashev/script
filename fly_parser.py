@@ -1,9 +1,11 @@
 # coding=utf-8
 import requests
 from lxml import html
-from datetime import date 
+from datetime import date
 import re
 # Проверка валидности даты
+
+
 def valid_date(inp_date):
     try:
         if not bool(re.match('\d{4}-\d{2}-\d{2}', inp_date)):
@@ -19,20 +21,22 @@ def valid_date(inp_date):
     except ValueError:
         print 'Введите корректную дату'
         return False
+
+
 def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
-    oneway = '' if return_data else  'on'
+    oneway = '' if return_data else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
-    headers = { 'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:50.0) Gecko/20100101 Firefox/50.0',
-                'Referer': 'https://www.flyniki.com/ru/start.php',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'ru,en-US;q=0.7,en;q=0.3',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive'}
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:50.0) Gecko/20100101 Firefox/50.0',
+               'Referer': 'https://www.flyniki.com/ru/start.php',
+               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+               'Accept-Language': 'ru,en-US;q=0.7,en;q=0.3',
+               'Accept-Encoding': 'gzip, deflate, br',
+               'Connection': 'keep-alive'}
     data = {'market': 'RU',
             'language': 'ru',
             'bookingmask_widget_id': 'bookingmask-widget-stageoffer',
             'bookingmask_widget_dateformat': 'dd.mm.yy',
-            'oneway': 'on',}
+            'oneway': 'on'}
     req_sess = requests.Session()
     start_post = req_sess.post(start_url, data=data, headers=headers, verify=False)
     data_res = [('_ajax[templates][]', 'main'),
@@ -49,15 +53,15 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                 ('_ajax[requestParams][childCount]', '0'),
                 ('_ajax[requestParams][infantCount]', '0'),
                 ('_ajax[requestParams][openDateOverview]', ''),
-                ('_ajax[requestParams][oneway]', oneway),]
-    headers_res = { 'Accept': 'application/json, text/javascript, */*',
-                    'Host': 'www.flyniki.com',
-                    'Origin': 'https://www.flyniki.com',
-                    'Accept-Encoding': 'gzip, deflate',
-                    'Accept-Language': 'en-US,en;q=0.8',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.59 Safari/537.36',
-                    'X-Requested-With': 'XMLHttpRequest'}
+                ('_ajax[requestParams][oneway]', oneway)]
+    headers_res = {'Accept': 'application/json, text/javascript, */*',
+                   'Host': 'www.flyniki.com',
+                   'Origin': 'https://www.flyniki.com',
+                   'Accept-Encoding': 'gzip, deflate',
+                   'Accept-Language': 'en-US,en;q=0.8',
+                   'Content-Type': 'application/x-www-form-urlencoded',
+                   'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.59 Safari/537.36',
+                   'X-Requested-With': 'XMLHttpRequest'}
     result = requests.post(start_post.url, data=data_res, headers=headers_res, cookies=req_sess.cookies, verify=False)
     try:
         fly_html = html.fromstring(result.json()['templates']['main'])
@@ -72,10 +76,11 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
         print 'Не удалось найти рейсы на запрошенную дату.'
         return
     currency = fly_html.xpath('.//*[@id="flighttables"]/div[1]/div[2]/table/thead/tr[2]/th[4]/text()')[0]
+
     def parser_fly_html(path_x):
         price = list()
         for row in range(len(fly_html.xpath(path_x + "tr"))):
-            block = fly_html.xpath(path_x +  'tr[' + str(row) + ']/td')
+            block = fly_html.xpath(path_x + 'tr[' + str(row) + ']/td')
             for node in block:
                 res = node.xpath('.//*[@class="lowest"]/span/@title')
                 for elem in res:
@@ -83,7 +88,7 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                                        elem.split(',')[1][7:],
                                        elem.split(',')[2],
                                        elem.split(',')[3].split(':')[0],
-                                       float(''.join(elem.split(':')[3].split('.')).replace(',','.'))]))
+                                       float(''.join(elem.split(':')[3].split('.')).replace(',', '.'))]))
         return price
     price_outbond = parser_fly_html('.//*[@class="outbound block"]/div[2]/table/tbody/')
     price_return = parser_fly_html('.//*[@class="return block"]/div[2]/table/tbody/')
@@ -96,7 +101,7 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
         price_result = list()
         for elem_out in price_outbond:
             for elem_ret in price_return:
-                price_result.append({'track_out':elem_out, 'track_return':elem_ret, 'total_sum':elem_out[-1] + elem_ret[-1] })
+                price_result.append({'track_out': elem_out, 'track_return': elem_ret, 'total_sum': elem_out[-1] + elem_ret[-1]})
         for elem_result in sorted(price_result, key=lambda x: x['total_sum']):
             print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_result['track_out']) + currency
             print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_result['track_return']) + currency
@@ -120,10 +125,11 @@ def parser():
         if return_data:
             if valid_date(return_data):
                 break
-        return_data  =''
+        return_data = ''
         break
     iata_depart = raw_input('Введите аэропорт вылета (IATA): ')
     iata_destination = raw_input('Введите аэропорт назначения (IATA): ')
     parser_flyniki(iata_depart, iata_destination, out_data, return_data)
-parser()
 
+
+parser()
