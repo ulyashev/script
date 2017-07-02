@@ -3,7 +3,6 @@ import requests
 from lxml import html
 from datetime import date 
 import re
-
 # Проверка валидности даты
 def valid_date(inp_date):
     try:
@@ -80,7 +79,6 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
         print 'Не удалось найти рейсы на запрошенную дату.'
         return
     currency = fly_html.xpath('.//*[@id="flighttables"]/div[1]/div[2]/table/thead/tr[2]/th[4]/text()')[0]
-
     def parser_fly_html(path_x):
         price = list()
         for row in range(len(fly_html.xpath(path_x + "tr"))):
@@ -94,30 +92,19 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                                        elem.split(',')[3].split(':')[0],
                                        float(''.join(elem.split(':')[3].split('.')).replace(',','.'))]))
         return price
-
     price_outbond = parser_fly_html('.//*[@class="outbound block"]/div[2]/table/tbody/')
     price_return = parser_fly_html('.//*[@class="return block"]/div[2]/table/tbody/')
     if not return_data:
-
         print 'Варианты маршрутов:'
         for elem_out in price_outbond:
             print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
     else:
-
         print 'Варианты маршрутов:'
         for elem_out in price_outbond:
             for elem_ret in price_return:
                 print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
                 print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_ret) + currency
                 print 'Общая стоимость: ', elem_out[-1] + elem_ret[-1], currency
-
-
-iata_depart = "DM"
-iata_destination = "bne"
-out_data = "2017-07-07"
-return_data = "2017-07-29"
-parser_flyniki(iata_depart, iata_destination, out_data, return_data)
-"""
 def parser():
     
     while True:
@@ -131,12 +118,11 @@ def parser():
                 break
         return_data  =''
         break
-    #iata_depart = raw_input('Введите аэропорт вылета: (IATA)')
-    #iata_destination = raw_input('Введите аэропорт назначения: (IATA)')
-
+    iata_depart = raw_input('Введите аэропорт вылета: (IATA)')
+    iata_destination = raw_input('Введите аэропорт назначения: (IATA)')
     parser_flyniki(iata_depart, iata_destination, out_data, return_data)
 parser()
-"""
+
 
 
 
