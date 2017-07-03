@@ -1,13 +1,17 @@
 # coding=utf-8
+""" Модуль предназначен для получения информации о наличии и стоимости
+авиабилетов на сайте www.flyniki.com. Основная функция принимает на вход
+четыре параметра: IATA-отравления(обязательный), IATA-прибытия(обязательный),
+дата отправления(обязательный) и дата возвращения(необязательный). Производится
+поиск возможных вариантов перелета и вывод информации на экран."""
 from datetime import date
 import re
 import requests
 from lxml import html
 
-# Проверка валидности даты
-
 
 def valid_date(inp_date):
+    """ Проверка валидности даты."""
     try:
         if not bool(re.match(r'\d{4}-\d{2}-\d{2}', inp_date)):
             print 'Введите корректную дату'
@@ -15,22 +19,23 @@ def valid_date(inp_date):
         yy, mm, dd = map(int, inp_date.split('-'))
         delta = date(yy, mm, dd) - date.today()
         if delta.days < 0:
-            print 'Дата меньше текущей'
+            print 'Дата меньше текущей.'
             return False
         return True
     except ValueError:
-        print 'Введите корректную дату'
+        print 'Введите корректную дату.'
         return False
 
 
 def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
+    """ Функция из полученных данных формирует и отрпавляет запрос."""
     oneway = '' if return_data else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; ' +
-               'rv:50.0) Gecko/20100101 Firefox/50.0',
+                             'rv:50.0) Gecko/20100101 Firefox/50.0',
                'Referer': 'https://www.flyniki.com/ru/start.php',
                'Accept': 'text/html,application/xhtml+xml,application/xml;' +
-               'q=0.9,*/*;q=0.8',
+                         'q=0.9,*/*;q=0.8',
                'Accept-Language': 'ru,en-US;q=0.7,en;q=0.3',
                'Accept-Encoding': 'gzip, deflate, br',
                'Connection': 'keep-alive'}
@@ -64,8 +69,8 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                    'Accept-Language': 'en-US,en;q=0.8',
                    'Content-Type': 'application/x-www-form-urlencoded',
                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)' +
-                   ' AppleWebKit/537.36 (KHTML, like Gecko) ' +
-                   'Chrome/54.0.2840.59 Safari/537.36',
+                                 ' AppleWebKit/537.36 (KHTML, like Gecko) ' +
+                                 'Chrome/54.0.2840.59 Safari/537.36',
                    'X-Requested-With': 'XMLHttpRequest'}
     result = requests.post(start_post.url, data=data_res, headers=headers_res,
                            cookies=req_sess.cookies, verify=False)
@@ -85,6 +90,8 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                               'table/thead/tr[2]/th[4]/text()')[0]
 
     def parser_fly_html(path_x):
+        """ Функция производит разбор ответа, полученного от сервера
+        и формирование результатов обработки для вывода на экран."""
         price = list()
         for row in range(len(fly_html.xpath(path_x + "tr"))):
             block = fly_html.xpath(path_x + 'tr[' + str(row) + ']/td')
@@ -124,6 +131,7 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
             print '---------------------------------------------------------'
 
 def parser():
+    """ Главная функция.  """
     while True:
         out_data = raw_input('Введите дату вылета (yyyy-mm-dd): ')
         if valid_date(out_data):
