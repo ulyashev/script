@@ -1,25 +1,25 @@
 # coding=utf-8
-import requests
-from lxml import html
 from datetime import date
 import re
+import requests
+from lxml import html
+
 # Проверка валидности даты
 
 
 def valid_date(inp_date):
     try:
-        if not bool(re.match('\d{4}-\d{2}-\d{2}', inp_date)):
-            print 'Введите корректную дату'
+        if not bool(re.match(r'\d{4}-\d{2}-\d{2}', inp_date)):
+            print 'Введите корректную дату' + '-----------Re'
             return False
         yy, mm, dd = map(int, inp_date.split('-'))
         delta = date(yy, mm, dd) - date.today()
         if delta.days < 0:
             print 'Дата меньше текущей'
             return False
-        print 'ok'
         return True
     except ValueError:
-        print 'Введите корректную дату'
+        print 'Введите корректную дату' + '_-------------value_err'
         return False
 
 
@@ -123,8 +123,11 @@ def parser():
     while True:
         return_data = raw_input('Введите дату возвращения или Enter (если билет в одну сторону) (yyyy-mm-dd): ')
         if return_data:
-            if valid_date(return_data):
+            if valid_date(return_data) and \
+                all(map(lambda a, b: a <= b, map(int, out_data.split('-')),\
+                map(int, return_data.split('-')))):
                 break
+            continue
         return_data = ''
         break
     iata_depart = raw_input('Введите аэропорт вылета (IATA): ')
