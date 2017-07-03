@@ -10,7 +10,7 @@ from lxml import html
 def valid_date(inp_date):
     try:
         if not bool(re.match(r'\d{4}-\d{2}-\d{2}', inp_date)):
-            print 'Введите корректную дату' + '-----------Re'
+            print 'Введите корректную дату'
             return False
         yy, mm, dd = map(int, inp_date.split('-'))
         delta = date(yy, mm, dd) - date.today()
@@ -19,16 +19,18 @@ def valid_date(inp_date):
             return False
         return True
     except ValueError:
-        print 'Введите корректную дату' + '_-------------value_err'
+        print 'Введите корректную дату'
         return False
 
 
 def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
     oneway = '' if return_data else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
-    headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:50.0) Gecko/20100101 Firefox/50.0',
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; ' +
+               'rv:50.0) Gecko/20100101 Firefox/50.0',
                'Referer': 'https://www.flyniki.com/ru/start.php',
-               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+               'Accept': 'text/html,application/xhtml+xml,application/xml;' +
+               'q=0.9,*/*;q=0.8',
                'Accept-Language': 'ru,en-US;q=0.7,en;q=0.3',
                'Accept-Encoding': 'gzip, deflate, br',
                'Connection': 'keep-alive'}
@@ -38,7 +40,8 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
             'bookingmask_widget_dateformat': 'dd.mm.yy',
             'oneway': 'on'}
     req_sess = requests.Session()
-    start_post = req_sess.post(start_url, data=data, headers=headers, verify=False)
+    start_post = req_sess.post(start_url, data=data,
+                               headers=headers, verify=False)
     data_res = [('_ajax[templates][]', 'main'),
                 ('_ajax[templates][]', 'priceoverview'),
                 ('_ajax[templates][]', 'infos'),
@@ -60,22 +63,26 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                    'Accept-Encoding': 'gzip, deflate',
                    'Accept-Language': 'en-US,en;q=0.8',
                    'Content-Type': 'application/x-www-form-urlencoded',
-                   'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.59 Safari/537.36',
+                   'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)' +
+                   ' AppleWebKit/537.36 (KHTML, like Gecko) ' +
+                   'Chrome/54.0.2840.59 Safari/537.36',
                    'X-Requested-With': 'XMLHttpRequest'}
-    result = requests.post(start_post.url, data=data_res, headers=headers_res, cookies=req_sess.cookies, verify=False)
+    result = requests.post(start_post.url, data=data_res, headers=headers_res,
+                           cookies=req_sess.cookies, verify=False)
     try:
         fly_html = html.fromstring(result.json()['templates']['main'])
     except KeyError:
         if result.json()['errorRAW'][0]['code'] == 'departure':
-            print 'Веден не кооректный IATA аэропорта отправления.'
+            print 'Введен не кооректный IATA аэропорта отправления.'
             return
         if result.json()['errorRAW'][0]['code'] == 'destination':
-            print 'Веден не кооректный IATA аэропорта назначения.'
+            print 'Введен не кооректный IATA аэропорта назначения.'
             return
     if not bool(result.json()['templates']['priceoverview']):
         print 'Не удалось найти рейсы на запрошенную дату.'
         return
-    currency = fly_html.xpath('.//*[@id="flighttables"]/div[1]/div[2]/table/thead/tr[2]/th[4]/text()')[0]
+    currency = fly_html.xpath('.//*[@id="flighttables"]/div[1]/div[2]/' +
+                              'table/thead/tr[2]/th[4]/text()')[0]
 
     def parser_fly_html(path_x):
         price = list()
@@ -90,30 +97,31 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                                        elem.split(',')[3].split(':')[0],
                                        float(''.join(elem.split(':')[3].split('.')).replace(',', '.'))]))
         return price
-    price_outbond = parser_fly_html('.//*[@class="outbound block"]/div[2]/table/tbody/')
-    price_return = parser_fly_html('.//*[@class="return block"]/div[2]/table/tbody/')
+    price_outbond = parser_fly_html('.//*[@class="outbound block"]/' +
+                                    'div[2]/table/tbody/')
+    price_return = parser_fly_html('.//*[@class="return block"]/' +
+                                   'div[2]/table/tbody/')
     if not return_data:
         print 'Варианты маршрутов:'
         for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
-            print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_out) + currency
-            print '-------------------------????-----------------------------------------------'
+            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +
+                   ' стоимость: {}').format(*elem_out) + currency
+            print '--------------------------------------------------------'
     else:
         price_result = list()
         for elem_out in price_outbond:
             for elem_ret in price_return:
-                price_result.append({'track_out': elem_out, 'track_return': elem_ret, 'total_sum': elem_out[-1] + elem_ret[-1]})
-        for elem_result in sorted(price_result, key=lambda x: x['total_sum']):
-            print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_result['track_out']) + currency
-            print 'Вылет:{}, прибытие: {}, длительность:{}, класс:{}, стоимость: {}'.format(*elem_result['track_return']) + currency
-            print 'Общая стоимость: ', elem_result['track_out'][-1] + elem_result['track_return'][-1], currency
-            print '--------------------------------------??????------------------------------'
-# Тесовые параметры ввода
-# iata_depart = 'dme'
-# iata_destination = 'bne'
-# out_data = '2017-07-22'
-# return_data = '2017-07-29'
-# parser_flyniki(iata_depart, iata_destination, out_data, return_data)
-
+                price_result.append({'track_out': elem_out,
+                                     'track_return': elem_ret,
+                                     'total_sum': elem_out[-1] + elem_ret[-1]})
+        for elem_res in sorted(price_result, key=lambda x: x['total_sum']):
+            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +\
+                   'стоимость:{}').format(*elem_res['track_out']) + currency
+            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +\
+                   'стоимость:{}').format(*elem_res['track_return']) + currency
+            print 'Общая стоимость: ', elem_res['track_out'][-1] + \
+                elem_res['track_return'][-1], currency
+            print '---------------------------------------------------------'
 
 def parser():
     while True:
@@ -121,11 +129,12 @@ def parser():
         if valid_date(out_data):
             break
     while True:
-        return_data = raw_input('Введите дату возвращения или Enter (если билет в одну сторону) (yyyy-mm-dd): ')
+        return_data = raw_input('Введите дату возвращения или Enter: ')
         if return_data:
             if valid_date(return_data) and \
-                all(map(lambda a, b: a <= b, map(int, out_data.split('-')),\
-                map(int, return_data.split('-')))):
+                     all(map(lambda a, b: a <= b, \
+                         map(int, out_data.split('-')),\
+                         map(int, return_data.split('-')))):
                 break
             continue
         return_data = ''
