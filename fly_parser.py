@@ -27,9 +27,9 @@ def valid_date(inp_date):
         return False
 
 
-def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
+def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
     """ Функция из полученных данных формирует и отрпавляет запрос."""
-    oneway = '' if return_data else 'on'
+    oneway = '' if return_date else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; ' +
                              'rv:50.0) Gecko/20100101 Firefox/50.0',
@@ -55,8 +55,8 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                 ('_ajax[requestParams][destination]', iata_destination),
                 ('_ajax[requestParams][returnDeparture]', ''),
                 ('_ajax[requestParams][returnDestination]', ''),
-                ('_ajax[requestParams][outboundDate]', out_data),
-                ('_ajax[requestParams][returnDate]', return_data),
+                ('_ajax[requestParams][outboundDate]', out_date),
+                ('_ajax[requestParams][returnDate]', return_date),
                 ('_ajax[requestParams][adultCount]', '1'),
                 ('_ajax[requestParams][childCount]', '0'),
                 ('_ajax[requestParams][infantCount]', '0'),
@@ -108,7 +108,7 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
                                     'div[2]/table/tbody/')
     price_return = parser_fly_html('.//*[@class="return block"]/' +
                                    'div[2]/table/tbody/')
-    if not return_data:
+    if not return_date:
         print 'Варианты маршрутов:'
         for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
             print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +
@@ -133,23 +133,23 @@ def parser_flyniki(iata_depart, iata_destination, out_data, return_data):
 def parser():
     """ Главная функция.  """
     while True:
-        out_data = raw_input('Введите дату вылета (yyyy-mm-dd): ')
-        if valid_date(out_data):
+        out_date = raw_input('Введите дату вылета (yyyy-mm-dd): ')
+        if valid_date(out_date):
             break
     while True:
-        return_data = raw_input('Введите дату возвращения или Enter: ')
-        if return_data:
-            if valid_date(return_data) and \
+        return_date = raw_input('Введите дату возвращения или Enter: ')
+        if return_date:
+            if valid_date(return_date) and \
                      all(map(lambda a, b: a <= b, \
-                         map(int, out_data.split('-')),\
-                         map(int, return_data.split('-')))):
+                         map(int, out_date.split('-')),\
+                         map(int, return_date.split('-')))):
                 break
             continue
-        return_data = ''
+        return_date = ''
         break
     iata_depart = raw_input('Введите аэропорт вылета (IATA): ')
     iata_destination = raw_input('Введите аэропорт назначения (IATA): ')
-    parser_flyniki(iata_depart, iata_destination, out_data, return_data)
+    parser_flyniki(iata_depart, iata_destination, out_date, return_date)
 
 
 parser()
