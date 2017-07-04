@@ -4,27 +4,22 @@
 четыре параметра: IATA-отравления(обязательный), IATA-прибытия(обязательный),
 дата отправления(обязательный) и дата возвращения(необязательный). Производится
 поиск возможных вариантов перелета и вывод информации на экран."""
-from datetime import date
-import re
+import sys
+from datetime import datetime, timedelta
 import requests
 from lxml import html
 
 
-def valid_date(inp_date):
+def valid_date(date):
     """ Проверка валидности даты."""
     try:
-        if not bool(re.match(r'\d{4}-\d{2}-\d{2}', inp_date)):
-            print 'Введите корректную дату'
-            return False
-        yy, mm, dd = map(int, inp_date.split('-'))
-        delta = date(yy, mm, dd) - date.today()
-        if delta.days < 0:
+        if datetime.strptime(date, '%Y-%m-%d') - datetime.now() < timedelta(-1):
             print 'Дата меньше текущей.'
-            return False
+            return
         return True
     except ValueError:
         print 'Введите корректную дату.'
-        return False
+        return
 
 
 def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
@@ -130,26 +125,28 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
                 elem_res['track_return'][-1], currency
             print '---------------------------------------------------------'
 
-def parser():
-    """ Главная функция.  """
-    while True:
-        out_date = raw_input('Введите дату вылета (yyyy-mm-dd): ')
-        if valid_date(out_date):
-            break
-    while True:
-        return_date = raw_input('Введите дату возвращения или Enter: ')
-        if return_date:
-            if valid_date(return_date) and \
-                     all(map(lambda a, b: a <= b, \
-                         map(int, out_date.split('-')),\
-                         map(int, return_date.split('-')))):
-                break
-            continue
+
+def parser(args):
+    """ Главная функция."""
+    if len(args) == 5:
+        iata_depart, iata_destination, out_date, return_date = args[1:]
+
+    elif len(args) == 4:
+        iata_depart, iata_destination, out_date = args[1:]
         return_date = ''
-        break
-    iata_depart = raw_input('Введите аэропорт вылета (IATA): ')
-    iata_destination = raw_input('Введите аэропорт назначения (IATA): ')
+    else:
+        print 'Вы передали {} параметра(ов), необходимо 3 или 4.'.format(len(args[1:]))
+        return
+    if not valid_date(out_date):
+        return
+    if return_date:
+        if not valid_date(return_date):
+            return
+        if datetime.strptime(return_date, '%Y-%m-%d') - datetime.strptime(out_date, '%Y-%m-%d') < timedelta():
+            print 'Дата возвращения меньше даты вылета'
+            return
     parser_flyniki(iata_depart, iata_destination, out_date, return_date)
 
+parser(sys.argv)
 
-parser()
+
