@@ -22,6 +22,47 @@ def valid_date(date):
         return
 
 
+def parser_fly_html(fly_html, path_x):
+    """ Функция производит разбор ответа, полученного от сервера
+    и формирование результатов обработки для вывода на экран."""
+    price = list()
+    for row in range(len(fly_html.xpath(path_x + "tr"))):
+        block = fly_html.xpath(path_x + 'tr[' + str(row) + ']/td')
+        for node in block:
+            res = node.xpath('.//*[@class="lowest"]/span/@title')
+            for elem in res:
+                price.append(list([elem.split(',')[1][:6],
+                                   elem.split(',')[1][7:],
+                                   elem.split(',')[2],
+                                   elem.split(',')[3].split(':')[0],
+                                   float(''.join(elem.split(':')[3].split('.')).replace(',', '.'))]))
+    return price
+
+
+def info_output(price_outbond, price_return, currency, return_date):
+    if not return_date:
+        print 'Варианты маршрутов:'
+        for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
+            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +
+                   ' стоимость: {}').format(*elem_out) + currency
+            print '--------------------------------------------------------'
+    else:
+        price_result = list()
+        for elem_out in price_outbond:
+            for elem_ret in price_return:
+                price_result.append({'track_out': elem_out,
+                                     'track_return': elem_ret,
+                                     'total_sum': elem_out[-1] + elem_ret[-1]})
+        for elem_res in sorted(price_result, key=lambda x: x['total_sum']):
+            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +\
+                   'стоимость:{}').format(*elem_res['track_out']) + currency
+            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +\
+                   'стоимость:{}').format(*elem_res['track_return']) + currency
+            print 'Общая стоимость: ', elem_res['track_out'][-1] + \
+                elem_res['track_return'][-1], currency
+            print '---------------------------------------------------------'
+
+
 def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
     """ Функция из полученных данных формирует и отрпавляет запрос."""
     oneway = '' if return_date else 'on'
@@ -67,8 +108,7 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
                                  ' AppleWebKit/537.36 (KHTML, like Gecko) ' +
                                  'Chrome/54.0.2840.59 Safari/537.36',
                    'X-Requested-With': 'XMLHttpRequest'}
-    result = requests.post(start_post.url, data=data_res, headers=headers_res,
-                           cookies=req_sess.cookies, verify=False)
+    result = req_sess.post(start_post.url, data=data_res, headers=headers_res, verify=False)
     try:
         fly_html = html.fromstring(result.json()['templates']['main'])
     except KeyError:
@@ -84,47 +124,11 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
     currency = fly_html.xpath('.//*[@id="flighttables"]/div[1]/div[2]/' +
                               'table/thead/tr[2]/th[4]/text()')[0]
 
-    def parser_fly_html(path_x):
-        """ Функция производит разбор ответа, полученного от сервера
-        и формирование результатов обработки для вывода на экран."""
-        price = list()
-        for row in range(len(fly_html.xpath(path_x + "tr"))):
-            block = fly_html.xpath(path_x + 'tr[' + str(row) + ']/td')
-            for node in block:
-                res = node.xpath('.//*[@class="lowest"]/span/@title')
-                for elem in res:
-                    price.append(list([elem.split(',')[1][:6],
-                                       elem.split(',')[1][7:],
-                                       elem.split(',')[2],
-                                       elem.split(',')[3].split(':')[0],
-                                       float(''.join(elem.split(':')[3].split('.')).replace(',', '.'))]))
-        return price
-    price_outbond = parser_fly_html('.//*[@class="outbound block"]/' +
+    price_outbond = parser_fly_html(fly_html, './/*[@class="outbound block"]/' +
                                     'div[2]/table/tbody/')
-    price_return = parser_fly_html('.//*[@class="return block"]/' +
+    price_return = parser_fly_html(fly_html, './/*[@class="return block"]/' +
                                    'div[2]/table/tbody/')
-    if not return_date:
-        print 'Варианты маршрутов:'
-        for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
-            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +
-                   ' стоимость: {}').format(*elem_out) + currency
-            print '--------------------------------------------------------'
-    else:
-        price_result = list()
-        for elem_out in price_outbond:
-            for elem_ret in price_return:
-                price_result.append({'track_out': elem_out,
-                                     'track_return': elem_ret,
-                                     'total_sum': elem_out[-1] + elem_ret[-1]})
-        for elem_res in sorted(price_result, key=lambda x: x['total_sum']):
-            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +\
-                   'стоимость:{}').format(*elem_res['track_out']) + currency
-            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +\
-                   'стоимость:{}').format(*elem_res['track_return']) + currency
-            print 'Общая стоимость: ', elem_res['track_out'][-1] + \
-                elem_res['track_return'][-1], currency
-            print '---------------------------------------------------------'
-
+    info_output(price_outbond, price_return, currency, return_date)
 
 def parser(args):
     """ Главная функция."""
