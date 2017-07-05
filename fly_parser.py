@@ -11,7 +11,6 @@ import requests
 from lxml import html
 
 
-
 def valid_date(date):
     """ Проверка валидности даты."""
     try:
@@ -28,19 +27,17 @@ def valid_date(date):
 def parser_fly_html(fly_html, path_x):
     """ Функция производит разбор ответа, полученного от сервера
     и формирование результатов обработки для вывода на экран."""
-    price = list()
-    for row in range(len(fly_html.xpath(path_x + 'tr'))):
-        block = fly_html.xpath('{}tr[{}]/td'.format(path_x, row))
-        for node in block:
-            res = node.xpath('.//*[@class="lowest"]/span/@title')
-            for elem in res:
-                price.append([
-                    elem.split(',')[1][:6],
-                    elem.split(',')[1][7:],
-                    elem.split(',')[2],
-                    elem.split(',')[3].split(':')[0],
-                    float(''.join(elem.split(':')[3].split('.')).replace(',', '.'))
-                ])
+    price = []
+    for node in fly_html.xpath('{}tr/td/*'.format(path_x)):
+        res = node.xpath('.//*[@class="lowest"]/span/@title')
+        for elem in res:
+            price.append([
+                elem.split(',')[1][:6],
+                elem.split(',')[1][7:],
+                elem.split(',')[2],
+                elem.split(',')[3].split(':')[0],
+                float(''.join(elem.split(':')[3].split('.')).replace(',', '.'))
+            ])
     return price
 
 
@@ -63,6 +60,9 @@ def error_process_resp(result):
 
 
 def info_output(price_outbond, price_return, currency, return_date):
+    """Вывод информации в зависимости от состояния return_date,
+    в случае, если обратный маршрут, осуществляется подсчет общей
+    стоимости перелета."""
     if not return_date:
         print 'Варианты маршрутов:'
         for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
@@ -72,9 +72,11 @@ def info_output(price_outbond, price_return, currency, return_date):
     else:
         price_result = []
         for elem_out, elem_ret in product(price_outbond, price_return):
-            price_result.append({'track_out': elem_out,
-                                 'track_return': elem_ret,
-                                 'total_sum': elem_out[-1] + elem_ret[-1]})
+            price_result.append({
+                'track_out': elem_out,
+                'track_return': elem_ret,
+                'total_sum': elem_out[-1] + elem_ret[-1]
+            })
         for elem_res in sorted(price_result, key=lambda x: x['total_sum']):
             print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},'
                    'стоимость:{}').format(*elem_res['track_out']) + currency
@@ -85,7 +87,7 @@ def info_output(price_outbond, price_return, currency, return_date):
 
 
 def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
-    """ Функция из полученных данных формирует и отрпавляет запрос."""
+    """ Функция из полученных данных формирует и отправляет запрос."""
     oneway = '' if return_date else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
     headers = {
@@ -161,7 +163,8 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
 
 
 def parser(args):
-    """ Главная функция."""
+    """ Осуществляет разбор параметров полученных из
+    sys.argv и их проверку"""
     if len(args) == 5:
         iata_depart, iata_destination, out_date, return_date = args[1:]
 
