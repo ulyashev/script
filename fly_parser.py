@@ -46,7 +46,7 @@ def parser_fly_html(fly_html, path_x):
 
 
 def error_process_resp(result):
-    """ Функция производит обработку ошибок ответа сервера"""
+    """ Функция производит обработку ошибок ответа сервера."""
     res_json = result.json()
     try:
         fly_html = html.fromstring(res_json['templates']['main'])
@@ -73,8 +73,7 @@ def info_output(price_outbond, price_return, currency, return_date):
         print 'Варианты маршрутов:'
         for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
             print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +
-                   ' стоимость: {}').format(*elem_out) + currency
-            print '--------------------------------------------------------'
+                   ' стоимость: {}').format(*elem_out) + currency, '\n'
     else:
         price_result = []
         for elem_out, elem_ret in product(price_outbond, price_return):
@@ -88,8 +87,7 @@ def info_output(price_outbond, price_return, currency, return_date):
                    ' стоимость:{}').format(*elem_res['track_out']) + currency
             print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},'
                    'стоимость:{}').format(*elem_res['track_return']) + currency
-            print 'Общая стоимость: ', elem_res['total_sum'], currency
-            print '---------------------------------------------------------'
+            print 'Общая стоимость: ', elem_res['total_sum'], currency, '\n'
 
 
 def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
