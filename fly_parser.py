@@ -43,8 +43,8 @@ def parser_fly_html(fly_html, path_x):
 
 def error_process_resp(result):
     """ Функция производит обработку ошибок ответа сервера"""
+    res_json = result.json()
     try:
-        res_json = result.json()
         fly_html = html.fromstring(res_json['templates']['main'])
     except KeyError:
         if res_json['errorRAW'][0]['code'] == 'departure':
@@ -53,6 +53,9 @@ def error_process_resp(result):
         if res_json['errorRAW'][0]['code'] == 'destination':
             print 'Введен не кооректный IATA аэропорта назначения.'
             return
+        else:
+            print 'Unknown error.'
+        return
     if not res_json['templates']['priceoverview']:
         print 'Не удалось найти рейсы на запрошенную дату(ы).'
         return
@@ -172,7 +175,8 @@ def parser(args):
         iata_depart, iata_destination, out_date = args[1:]
         return_date = ''
     else:
-        print 'Вы передали {} параметра(ов), необходимо 3 или 4.'.format(len(args[1:]))
+        print ('Вы передали {} параметра(ов),'
+               'необходимо 3 или 4.').format(len(args[1:]))
         return
     if not valid_date(out_date):
         return
