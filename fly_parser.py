@@ -3,7 +3,9 @@
 авиабилетов на сайте www.flyniki.com. Основная функция принимает на вход
 четыре параметра: IATA-отравления(обязательный), IATA-прибытия(обязательный),
 дата отправления(обязательный) и дата возвращения(необязательный). Производится
-поиск возможных вариантов перелета и вывод информации на экран."""
+поиск возможных вариантов перелета и вывод информации на экран. Формат ввода:
+IATA- код, состоящий из трёх латинских букв, дата в формате "2017-05-25",
+(ГГГГ-ММ-ДД)."""
 import sys
 from datetime import datetime, timedelta
 from itertools import product
@@ -12,7 +14,8 @@ from lxml import html
 
 
 def valid_date(date):
-    """ Проверка валидности даты."""
+    """ Проверка валидности даты. Функция получает на вход строку, проверяет ее
+    на соответствие указанному шаблону, и проверяет актуальность даты."""
     try:
         if (datetime.strptime(date, '%Y-%m-%d') -
                 datetime.now()) < timedelta(-1):
@@ -20,13 +23,14 @@ def valid_date(date):
             return
         return True
     except ValueError:
-        print 'Введите корректную дату.'
+        print 'Введите корректную дату. Формат даты (yyyy-mm-dd)'
         return
 
 
 def parser_fly_html(fly_html, path_x):
     """ Функция производит разбор ответа, полученного от сервера
-    и формирование результатов обработки для вывода на экран."""
+    и формирование результатов обработки для вывода на экран. На вход принимает
+    объект fly_html и строку path_x. Возвращаемое значение - список price."""
     price = []
     for node in fly_html.xpath('{}tr/td/*'.format(path_x)):
         res = node.xpath('.//*[@class="lowest"]/span/@title')
@@ -63,9 +67,8 @@ def error_process_resp(result):
 
 
 def info_output(price_outbond, price_return, currency, return_date):
-    """Вывод информации в зависимости от состояния return_date,
-    в случае, если обратный маршрут, осуществляется подсчет общей
-    стоимости перелета."""
+    """Вывод информации в зависимости от состояния return_date, в случае если
+    есть обратный маршрут, осуществляется подсчет общей стоимости перелета."""
     if not return_date:
         print 'Варианты маршрутов:'
         for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
@@ -82,7 +85,7 @@ def info_output(price_outbond, price_return, currency, return_date):
             })
         for elem_res in sorted(price_result, key=lambda x: x['total_sum']):
             print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},'
-                   'стоимость:{}').format(*elem_res['track_out']) + currency
+                   ' стоимость:{}').format(*elem_res['track_out']) + currency
             print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},'
                    'стоимость:{}').format(*elem_res['track_return']) + currency
             print 'Общая стоимость: ', elem_res['total_sum'], currency
@@ -166,11 +169,9 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
 
 
 def parser(args):
-    """ Осуществляет разбор параметров полученных из
-    sys.argv и их проверку"""
+    """ Осуществляет разбор параметров полученных из sys.argv и их проверку"""
     if len(args) == 5:
         iata_depart, iata_destination, out_date, return_date = args[1:]
-
     elif len(args) == 4:
         iata_depart, iata_destination, out_date = args[1:]
         return_date = ''
@@ -185,7 +186,7 @@ def parser(args):
             return
         if (datetime.strptime(return_date, '%Y-%m-%d') -
                 datetime.strptime(out_date, '%Y-%m-%d')) < timedelta():
-            print 'Дата возвращения меньше даты вылета'
+            print 'Дата возвращения меньше даты вылета.'
             return
     parser_flyniki(iata_depart, iata_destination, out_date, return_date)
 
