@@ -44,6 +44,24 @@ def parser_fly_html(fly_html, path_x):
     return price
 
 
+def error_process_resp(result):
+    """ Функция производит обработку ошибок ответа сервера"""
+    try:
+        res_json = result.json()
+        fly_html = html.fromstring(res_json['templates']['main'])
+    except KeyError:
+        if res_json['errorRAW'][0]['code'] == 'departure':
+            print 'Введен не кооректный IATA аэропорта отправления.'
+            return
+        if res_json['errorRAW'][0]['code'] == 'destination':
+            print 'Введен не кооректный IATA аэропорта назначения.'
+            return
+    if not res_json['templates']['priceoverview']:
+        print 'Не удалось найти рейсы на запрошенную дату(ы).'
+        return
+    return fly_html
+
+
 def info_output(price_outbond, price_return, currency, return_date):
     if not return_date:
         print 'Варианты маршрутов:'
@@ -125,18 +143,8 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
         headers=headers_res,
         verify=False
     )
-    try:
-        res_json = result.json()
-        fly_html = html.fromstring(res_json['templates']['main'])
-    except KeyError:
-        if res_json['errorRAW'][0]['code'] == 'departure':
-            print 'Введен не кооректный IATA аэропорта отправления.'
-            return
-        if res_json['errorRAW'][0]['code'] == 'destination':
-            print 'Введен не кооректный IATA аэропорта назначения.'
-            return
-    if not res_json['templates']['priceoverview']:
-        print 'Не удалось найти рейсы на запрошенную дату(ы).'
+    fly_html = error_process_resp(result)
+    if not fly_html:
         return
     currency = fly_html.xpath(
         './/*[@id="flighttables"]/div[1]/div[2]/'
