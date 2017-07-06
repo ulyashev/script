@@ -33,8 +33,7 @@ def parser_fly_html(fly_html, path_x):
     объект fly_html и строку path_x. Возвращаемое значение - список price."""
     price = []
     for node in fly_html.xpath('{}tr/td/*'.format(path_x)):
-        res = node.xpath('.//*[@class="lowest"]/span/@title')
-        for elem in res:
+        for elem in node.xpath('.//*[@class="lowest"]/span/@title'):
             price.append([
                 elem.split(',')[1][:6],
                 elem.split(',')[1][7:],
