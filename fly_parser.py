@@ -7,13 +7,13 @@
 IATA- код, состоящий из трёх латинских букв, дата в формате "2017-05-25",
 (ГГГГ-ММ-ДД)."""
 import sys
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from itertools import product
 import requests
 from lxml import html
 
 
-def valid_date(inp_date):
+def date_validation(inp_date):
     """ Проверка валидности даты. Функция получает на вход строку, проверяет ее
     на соответствие указанному шаблону, и проверяет актуальность даты."""
     try:
@@ -26,12 +26,35 @@ def valid_date(inp_date):
     return True
 
 
-def parser_fly_html(fly_html, path_x):
+def cheking_input_data(args):
+    """ Осуществляет разбор параметров полученных из sys.argv и их проверку"""
+    if len(args) == 5:
+        iata_depart, iata_destin, out_date, return_date = args[1:]
+    elif len(args) == 4:
+        iata_depart, iata_destin, out_date = args[1:]
+        return_date = None
+    else:
+        print ('Вы передали {} параметра(ов),'
+               'необходимо 3 или 4.').format(len(args[1:]))
+        return
+    if not date_validation(out_date):
+        return
+    if return_date:
+        if not date_validation(return_date):
+            return
+        if (datetime.strptime(return_date, '%Y-%m-%d') -
+                datetime.strptime(out_date, '%Y-%m-%d')) < timedelta():
+            print 'Дата возвращения меньше даты вылета.'
+            return
+    return iata_depart, iata_destin, out_date, return_date
+
+
+def parsing_result_html(result_html, path_x):
     """ Функция производит разбор ответа, полученного от сервера
     и формирование результатов обработки для вывода на экран. На вход принимает
-    объект fly_html и строку path_x. Возвращаемое значение - список price."""
+    объект result_html и строку path_x. Возвращаемое значение - список."""
     price = []
-    for node in fly_html.xpath('{}tr/td/*'.format(path_x)):
+    for node in result_html.xpath('{}tr/td/*'.format(path_x)):
         for elem in node.xpath('.//*[@class="lowest"]/span/@title'):
             price.append([
                 elem.split(',')[1][:6],
@@ -43,11 +66,11 @@ def parser_fly_html(fly_html, path_x):
     return price
 
 
-def server_error_processing(result):
+def handle_server_errors(result):
     """ Функция производит обработку ошибок ответа сервера."""
     res_json = result.json()
     try:
-        fly_html = html.fromstring(res_json['templates']['main'])
+        result_html = html.fromstring(res_json['templates']['main'])
     except KeyError:
         if res_json['errorRAW'][0]['code'] == 'departure':
             print 'Введен не кооректный IATA аэропорта отправления.'
@@ -61,10 +84,10 @@ def server_error_processing(result):
     if not res_json['templates']['priceoverview']:
         print 'Не удалось найти рейсы на запрошенную дату(ы).'
         return
-    return fly_html
+    return result_html
 
 
-def info_output(price_outbond, price_return, currency, return_date):
+def information_output(price_outbond, price_return, currency, return_date):
     """Вывод информации в зависимости от состояния return_date, в случае если
     есть обратный маршрут, осуществляется подсчет общей стоимости перелета."""
     if not return_date:
@@ -88,11 +111,15 @@ def info_output(price_outbond, price_return, currency, return_date):
             print 'Общая стоимость: ', elem_res['total_sum'], currency, '\n'
 
 
-def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
-    """ Функция из полученных данных формирует и отправляет запрос."""
+def main(sys_arg):
+    """ Главная функция."""
+    input_args = cheking_input_data(sys_arg)
+    if not input_args:
+        return
+    iata_depart, iata_destin, out_date, return_date = input_args
     oneway = '' if return_date else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
-    headers = {
+    headers_start = {
         'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:50.0) Gecko/20100101 Firefox/50.0',
         'Referer': 'https://www.flyniki.com/ru/start.php',
         'Accept': 'text/html,application/xhtml+xml,application/xml; q=0.9,*/*;q=0.8',
@@ -100,7 +127,7 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive'
     }
-    data = {
+    data_start = {
         'market': 'RU',
         'language': 'ru',
         'bookingmask_widget_id': 'bookingmask-widget-stageoffer',
@@ -110,17 +137,17 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
     req_sess = requests.Session()
     start_post = req_sess.post(
         start_url,
-        data=data,
-        headers=headers,
+        data=data_start,
+        headers=headers_start,
         verify=False
     )
-    data_res = [
+    data_result = [
         ('_ajax[templates][]', 'main'),
         ('_ajax[templates][]', 'priceoverview'),
         ('_ajax[templates][]', 'infos'),
         ('_ajax[templates][]', 'flightinfo'),
         ('_ajax[requestParams][departure]', iata_depart),
-        ('_ajax[requestParams][destination]', iata_destination),
+        ('_ajax[requestParams][destination]', iata_destin),
         ('_ajax[requestParams][returnDeparture]', ''),
         ('_ajax[requestParams][returnDestination]', ''),
         ('_ajax[requestParams][outboundDate]', out_date),
@@ -131,7 +158,7 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
         ('_ajax[requestParams][openDateOverview]', ''),
         ('_ajax[requestParams][oneway]', oneway)
     ]
-    headers_res = {
+    headers_result = {
         'Accept': 'application/json, text/javascript, */*',
         'Host': 'www.flyniki.com',
         'Origin': 'https://www.flyniki.com',
@@ -141,50 +168,27 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.59 Safari/537.36',
         'X-Requested-With': 'XMLHttpRequest'
     }
-    result = req_sess.post(
+    result_response = req_sess.post(
         start_post.url,
-        data=data_res,
-        headers=headers_res,
+        data=data_result,
+        headers=headers_result,
         verify=False
     )
-    fly_html = server_error_processing(result)
-    if not fly_html:
+    result_html = handle_server_errors(result_response)
+    if not result_html:
         return
-    currency = fly_html.xpath(
+    currency = result_html.xpath(
         './/*[@id="flighttables"]/div[1]/div[2]/'
         'table/thead/tr[2]/th[4]/text()')[0]
-    price_outbond = parser_fly_html(
-        fly_html,
+    price_outbond = parsing_result_html(
+        result_html,
         './/*[@class="outbound block"]/div[2]/table/tbody/'
     )
-    price_return = parser_fly_html(
-        fly_html,
+    price_return = parsing_result_html(
+        result_html,
         './/*[@class="return block"]/div[2]/table/tbody/'
     )
-    info_output(price_outbond, price_return, currency, return_date)
+    information_output(price_outbond, price_return, currency, return_date)
 
 
-def parser(args):
-    """ Осуществляет разбор параметров полученных из sys.argv и их проверку"""
-    if len(args) == 5:
-        iata_depart, iata_destination, out_date, return_date = args[1:]
-    elif len(args) == 4:
-        iata_depart, iata_destination, out_date = args[1:]
-        return_date = None
-    else:
-        print ('Вы передали {} параметра(ов),'
-               'необходимо 3 или 4.').format(len(args[1:]))
-        return
-    if not valid_date(out_date):
-        return
-    if return_date:
-        if not valid_date(return_date):
-            return
-        if (datetime.strptime(return_date, '%Y-%m-%d') -
-                datetime.strptime(out_date, '%Y-%m-%d')) < timedelta():
-            print 'Дата возвращения меньше даты вылета.'
-            return
-    parser_flyniki(iata_depart, iata_destination, out_date, return_date)
-
-
-parser(sys.argv)
+main(sys.argv)
