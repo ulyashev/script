@@ -7,24 +7,23 @@
 IATA- код, состоящий из трёх латинских букв, дата в формате "2017-05-25",
 (ГГГГ-ММ-ДД)."""
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, date
 from itertools import product
 import requests
 from lxml import html
 
 
-def valid_date(date):
+def valid_date(inp_date):
     """ Проверка валидности даты. Функция получает на вход строку, проверяет ее
     на соответствие указанному шаблону, и проверяет актуальность даты."""
     try:
-        if (datetime.strptime(date, '%Y-%m-%d') -
-                datetime.now()) < timedelta(-1):
+        if datetime.strptime(inp_date, '%Y-%m-%d').date() < date.today():
             print 'Дата меньше текущей.'
             return
-        return True
     except ValueError:
-        print 'Введите корректную дату. Формат даты (yyyy-mm-dd)'
+        print 'Введите корректную дату. Формат даты (yyyy-mm-dd):'
         return
+    return True
 
 
 def parser_fly_html(fly_html, path_x):
@@ -44,7 +43,7 @@ def parser_fly_html(fly_html, path_x):
     return price
 
 
-def error_process_resp(result):
+def server_error_processing(result):
     """ Функция производит обработку ошибок ответа сервера."""
     res_json = result.json()
     try:
@@ -148,7 +147,7 @@ def parser_flyniki(iata_depart, iata_destination, out_date, return_date):
         headers=headers_res,
         verify=False
     )
-    fly_html = error_process_resp(result)
+    fly_html = server_error_processing(result)
     if not fly_html:
         return
     currency = fly_html.xpath(
@@ -171,7 +170,7 @@ def parser(args):
         iata_depart, iata_destination, out_date, return_date = args[1:]
     elif len(args) == 4:
         iata_depart, iata_destination, out_date = args[1:]
-        return_date = ''
+        return_date = None
     else:
         print ('Вы передали {} параметра(ов),'
                'необходимо 3 или 4.').format(len(args[1:]))
