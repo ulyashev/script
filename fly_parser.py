@@ -26,7 +26,7 @@ def date_validation(inp_date):
     return True
 
 
-def cheking_input_data(args):
+def check_input_data(args):
     """ Осуществляет разбор параметров полученных из sys.argv и их проверку"""
     if len(args) == 5:
         iata_depart, iata_destin, out_date, return_date = args[1:]
@@ -113,7 +113,7 @@ def information_output(price_outbond, price_return, currency, return_date):
 
 def main(sys_arg):
     """ Главная функция."""
-    input_args = cheking_input_data(sys_arg)
+    input_args = check_input_data(sys_arg)
     if not input_args:
         return
     iata_depart, iata_destin, out_date, return_date = input_args
