@@ -180,7 +180,7 @@ def main(sys_arg):
         verify=False
     )
     result_html = handle_server_errors(result_response)
-    if not result_html:
+    if result_html == False:
         return
     currency = result_html.xpath(
         './/*[@id="flighttables"]/div[1]/div[2]/'
