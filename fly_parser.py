@@ -75,18 +75,18 @@ def handle_server_errors(result):
     except KeyError:
         if res_json['errorRAW'][0]['code'] == 'departure':
             print 'Введен не кооректный IATA аэропорта отправления.'
-            return
+            return False
         if res_json['errorRAW'][0]['code'] == 'destination':
             print 'Введен не кооректный IATA аэропорта назначения.'
-            return
+            return False
         else:
             print 'Unknown error.'
-            return
+        return False
     except lxml.etree.XMLSyntaxError:
         pass
     if not res_json['templates']['priceoverview']:
         print 'Не удалось найти рейсы на запрошенную дату(ы).'
-        return
+        return False
     return result_html
 
 
