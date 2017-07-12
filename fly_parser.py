@@ -75,18 +75,18 @@ def handle_server_errors(result):
     except KeyError:
         if res_json['errorRAW'][0]['code'] == 'departure':
             print 'Введен не кооректный IATA аэропорта отправления.'
-            return False
+            return
         if res_json['errorRAW'][0]['code'] == 'destination':
             print 'Введен не кооректный IATA аэропорта назначения.'
-            return False
+            return
         else:
             print 'Unknown error.'
-        return False
+        return
     except lxml.etree.XMLSyntaxError:
         pass
     if not res_json['templates']['priceoverview']:
         print 'Не удалось найти рейсы на запрошенную дату(ы).'
-        return False
+        return
     return result_html
 
 
@@ -114,7 +114,7 @@ def information_output(price_outbond, price_return, currency, return_date):
             print 'Общая стоимость: ', elem_res['total_sum'], currency, '\n'
 
 
-def request_flyniki(args):
+def requests_flyniki(args):
     global return_date
     iata_depart, iata_destin, out_date, return_date = args
     oneway = '' if return_date else 'on'
@@ -185,12 +185,12 @@ def main(sys_arg):
     if not input_args:
         return
     try:
-        result_response = request_flyniki(input_args)
+        result_response = requests_flyniki(input_args)
     except Exception:
         print 'Network error'
         return
     result_html = handle_server_errors(result_response)
-    if result_html == False:
+    if result_html is None:
         return
     currency = result_html.xpath(
         './/*[@id="flighttables"]/div[1]/div[2]/'
