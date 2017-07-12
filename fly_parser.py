@@ -11,6 +11,7 @@ from datetime import datetime, date, timedelta
 from itertools import product
 import requests
 from lxml import html
+import lxml
 
 
 def date_validation(inp_date):
@@ -80,7 +81,9 @@ def handle_server_errors(result):
             return
         else:
             print 'Unknown error.'
-        return
+            return
+    except lxml.etree.XMLSyntaxError:
+        pass
     if not res_json['templates']['priceoverview']:
         print 'Не удалось найти рейсы на запрошенную дату(ы).'
         return
@@ -141,6 +144,7 @@ def main(sys_arg):
         headers=headers_start,
         verify=False
     )
+
     data_result = [
         ('_ajax[templates][]', 'main'),
         ('_ajax[templates][]', 'priceoverview'),
@@ -162,6 +166,7 @@ def main(sys_arg):
         'Accept': 'application/json, text/javascript, */*',
         'Host': 'www.flyniki.com',
         'Origin': 'https://www.flyniki.com',
+        "Referer": start_post.url,
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.8',
         'Content-Type': 'application/x-www-form-urlencoded',
