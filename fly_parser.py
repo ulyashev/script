@@ -114,12 +114,9 @@ def information_output(price_outbond, price_return, currency, return_date):
             print 'Общая стоимость: ', elem_res['total_sum'], currency, '\n'
 
 
-def main(sys_arg):
-    """ Главная функция."""
-    input_args = check_input_data(sys_arg)
-    if not input_args:
-        return
-    iata_depart, iata_destin, out_date, return_date = input_args
+def request_flyniki(args):
+    global return_date
+    iata_depart, iata_destin, out_date, return_date = args
     oneway = '' if return_date else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
     headers_start = {
@@ -179,6 +176,14 @@ def main(sys_arg):
         headers=headers_result,
         verify=False
     )
+    return result_response
+
+def main(sys_arg):
+    """ Главная функция."""
+    input_args = check_input_data(sys_arg)
+    if not input_args:
+        return
+    result_response = request_flyniki(input_args)
     result_html = handle_server_errors(result_response)
     if result_html == False:
         return
