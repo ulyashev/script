@@ -178,12 +178,17 @@ def request_flyniki(args):
     )
     return result_response
 
+
 def main(sys_arg):
     """ Главная функция."""
     input_args = check_input_data(sys_arg)
     if not input_args:
         return
-    result_response = request_flyniki(input_args)
+    try:
+        result_response = request_flyniki(input_args)
+    except Exception:
+        print 'Network error'
+        return
     result_html = handle_server_errors(result_response)
     if result_html == False:
         return
