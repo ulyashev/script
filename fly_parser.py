@@ -56,12 +56,14 @@ def parsing_result_html(result_html, path_x):
     price = []
     for node in result_html.xpath('{}tr/td/*'.format(path_x)):
         for elem in node.xpath('.//*[@class="lowest"]/span/@title'):
+            elem = elem.split(',')
             price.append([
-                elem.split(',')[1][:6],
-                elem.split(',')[1][7:],
-                elem.split(',')[2],
-                elem.split(',')[3].split(':')[0],
-                float(''.join(elem.split(':')[3].split('.')).replace(',', '.'))
+                elem[1][:6].strip(),
+                elem[1][7:].strip(),
+                elem[2].replace(' ', ''),
+                elem[3].split(':')[0].strip(),
+                float('.'.join([elem[3].split(':')[1].replace('.', ''),
+                                elem[4]]))
             ])
     return price
 
@@ -95,8 +97,8 @@ def information_output(price_outbond, price_return, currency, return_date):
     if not return_date:
         print 'Варианты маршрутов:'
         for elem_out in sorted(price_outbond, key=lambda x: x[-1]):
-            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},' +
-                   ' стоимость: {}').format(*elem_out) + currency, '\n'
+            print ('Вылет-{}, прибытие-{}, длительность:{}, класс:{},' +
+                   ' стоимость:{} ').format(*elem_out) + currency, '\n'
     else:
         price_result = []
         for elem_out, elem_ret in product(price_outbond, price_return):
@@ -106,11 +108,12 @@ def information_output(price_outbond, price_return, currency, return_date):
                 'total_sum': elem_out[-1] + elem_ret[-1]
             })
         for elem_res in sorted(price_result, key=lambda x: x['total_sum']):
-            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},'
-                   ' стоимость:{}').format(*elem_res['track_out']) + currency
-            print ('Вылет:{}, прибытие: {}, длительность:{}, класс:{},'
-                   'стоимость:{}').format(*elem_res['track_return']) + currency
-            print 'Общая стоимость: ', elem_res['total_sum'], currency, '\n'
+            print ('Вылет-{}, прибытие-{}, длительность:{}, класс:{},'
+                   ' стоимость:{} ').format(*elem_res['track_out']) + currency
+            print ('Вылет-{}, прибытие-{}, длительность:{}, класс:{}, '
+                   'стоимость:{} '.format(*elem_res['track_return']) +
+                   currency)
+            print 'Общая стоимость:', elem_res['total_sum'], currency, '\n'
 
 
 def requests_flyniki(args):
@@ -192,7 +195,7 @@ def main(sys_arg):
         return
     currency = result_html.xpath(
         './/*[@id="flighttables"]/div[1]/div[2]/'
-        'table/thead/tr[2]/th[4]/text()')[0]
+        'table/thead/tr[2]/th[4]/text()')[0].strip()
     price_outbond = parsing_result_html(
         result_html,
         './/*[@class="outbound block"]/div[2]/table/tbody/'
