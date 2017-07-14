@@ -70,24 +70,24 @@ def parsing_result_html(result_html, path_x):
 def handle_server_errors(result):
     """ Функция производит обработку ошибок ответа сервера."""
     res_json = result.json()
-    try:
-        result_html = html.fromstring(res_json['templates']['main'])
-    except KeyError:
+    if 'error' in res_json:
         if res_json['errorRAW'][0]['code'] == 'departure':
-            print 'Введен не кооректный IATA аэропорта отправления.'
-            return
-        if res_json['errorRAW'][0]['code'] == 'destination':
-            print 'Введен не кооректный IATA аэропорта назначения.'
-            return
+            print 'Введен не корректный IATA аэропорта отправления.'
+        elif res_json['errorRAW'][0]['code'] == 'destination':
+            print 'Введен не корректный IATA аэропорта назначения.'
+        elif res_json['errorRAW'][0]['code'] == 'CAB:E0DA03':
+            print 'Не удалось найти рейсы на запрошенную дату(ы).'
+        elif res_json['errorRAW'][0]['code'] == 'outboundDate':
+            print 'Не удалось найти рейсы на запрошенную дату вылета.'
+        elif res_json['errorRAW'][0]['code'] == 'returnDate':
+            print 'Не удалось найти рейсы на запрошенную дату возвращения.'
         else:
-            print 'Unknown error.'
+            print 'Неизвестная ошибка.'
         return
-    except lxml.etree.XMLSyntaxError:
-        pass
     if not res_json['templates']['priceoverview']:
         print 'Не удалось найти рейсы на запрошенную дату(ы).'
         return
-    return result_html
+    return html.fromstring(res_json['templates']['main'])
 
 
 def information_output(price_outbond, price_return, currency, return_date):
@@ -115,7 +115,6 @@ def information_output(price_outbond, price_return, currency, return_date):
 
 
 def requests_flyniki(args):
-    global return_date
     iata_depart, iata_destin, out_date, return_date = args
     oneway = '' if return_date else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
@@ -163,7 +162,7 @@ def requests_flyniki(args):
         'Accept': 'application/json, text/javascript, */*',
         'Host': 'www.flyniki.com',
         'Origin': 'https://www.flyniki.com',
-        "Referer": start_post.url,
+        'Referer': start_post.url,
         'Accept-Encoding': 'gzip, deflate',
         'Accept-Language': 'en-US,en;q=0.8',
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -176,7 +175,7 @@ def requests_flyniki(args):
         headers=headers_result,
         verify=False
     )
-    return result_response
+    return result_response, return_date
 
 
 def main(sys_arg):
@@ -185,9 +184,9 @@ def main(sys_arg):
     if not input_args:
         return
     try:
-        result_response = requests_flyniki(input_args)
+        result_response, return_date = requests_flyniki(input_args)
     except Exception:
-        print 'Network error'
+        print 'Ошибка сети.'
         return
     result_html = handle_server_errors(result_response)
     if result_html is None:
