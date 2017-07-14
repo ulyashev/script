@@ -11,7 +11,6 @@ from datetime import datetime, date, timedelta
 from itertools import product
 import requests
 from lxml import html
-import lxml
 
 
 def date_validation(inp_date):
