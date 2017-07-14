@@ -135,8 +135,8 @@ def requests_flyniki(args):
         'bookingmask_widget_dateformat': 'dd.mm.yy',
         'oneway': oneway
     }
-    req_sess = requests.Session()
-    start_post = req_sess.post(
+    session = requests.Session()
+    start_post = session.post(
         start_url,
         data=data_start,
         headers=headers_start,
@@ -171,7 +171,7 @@ def requests_flyniki(args):
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.59 Safari/537.36',
         'X-Requested-With': 'XMLHttpRequest'
     }
-    result_response = req_sess.post(
+    result_response = session.post(
         start_post.url,
         data=data_result,
         headers=headers_result,
