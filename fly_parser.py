@@ -117,6 +117,8 @@ def information_output(price_outbond, price_return, currency, return_date):
 
 
 def requests_flyniki(args):
+    """Функция осуществляет подстановку полученных данных в заголовки и тело
+    запроса, формирует и отправляет запрос по указанному адресу."""
     iata_depart, iata_destin, out_date, return_date = args
     oneway = '' if return_date else 'on'
     start_url = 'https://www.flyniki.com/ru/start.php'
